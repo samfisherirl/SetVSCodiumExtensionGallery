@@ -4,6 +4,7 @@ SplitPath(A_AppData, , &appData)
 
 Product := appData "\Local\Programs\VSCodium\resources\app\product.json"
 Product_backup := appData "\Local\Programs\VSCodium\resources\app\product_backup.json"
+
 Main()
 
 
@@ -11,16 +12,17 @@ Main()
 {
     if FileExist(Product)
     {
-        VSCodiumExtension(Product)
+        UpdateProductJson(Product)
+        ExitApp()
     }
     else
     {
         msg := Gui()
         msg.SetFont("s15")
-        msg.Add("Text", , "VSCodium's product.json not found in appdata. Enter Path:")
+        txt := msg.Add("Text", , "VSCodium's product.json not found in appdata. Enter Path:")
         msg.Add("Edit", "w300 h20 vPath")
         msg.Add("Button", "w100", "Browse").OnEvent("Click", "Browse")
-        msg.Add("Button", "x+10 w100", "Confirm")
+        msg.Add("Button", "x+10 w100", "Confirm").OnEvent("Click", "Confirm")
         msg.Show()
         Browse(*)
         {
@@ -29,23 +31,38 @@ Main()
                 MsgBox "Nvm."
             else
             {
-                if FileExist(SelectedFile)
+                if !FileExist(SelectedFile)
+                {
+                    txt.Value := "=>File not found!"
+                }
             }
-
+        }
+        Confirm(*)
+        {
+            if txt.Value != "=>File not found!"
+            {
+                msg.Hide()
+                UpdateProductJson(txt.Value)
+                MsgBox("Done!`nRestart VSCodium to see changes.")
+                ExitApp()
+            }
+            
         }
     }
 }
 
-class VSCodiumExtension
+class UpdateProductJson
 {
-    static Call(path)
+    static Call(path, Product_backup?)
     {
-        jdata := VSCodiumExtension.Read(path)
-        VSCodiumExtension.Write(Product_backup, FileRead(Product))
+        UpdateProductJson.Write(Product_backup, FileRead(Product))
+        jdata := UpdateProductJson.Read(path)
+        if jdata != false
+            UpdateProductJson.Write(Product, Jsons.Dumps(jdata))
     }
 
     static Write(Path, Str) => FileOpen(Path, "w").Write(Str)
-
+    
     static Read(SelectedFile)
     {
         return Jsons.Loads(&x := FileRead(SelectedFile))
@@ -53,14 +70,17 @@ class VSCodiumExtension
 
     static UpdateJdata(&jdata)
     {
-        jdata["extensionsGallery"]["serviceUrl"] := "https://marketplace.visualstudio.com/_apis/public/gallery"
-        jdata["extensionsGallery"]["itemUrl"] := "https://marketplace.visualstudio.com/items"
-        jdata["extensionsGallery"]["cacheUrl"] := "https://vscode.blob.core.windows.net/gallery/index"
-        return jdata
+        if jdata["extensionsGallery"]["serviceUrl"] != "https://marketplace.visualstudio.com/_apis/public/gallery" || jdata["extensionsGallery"]["itemUrl"] != "https://marketplace.visualstudio.com/items" || jdata["extensionsGallery"]["cacheUrl"] != "https://vscode.blob.core.windows.net/gallery/index"
+        {
+            jdata["extensionsGallery"]["serviceUrl"] := "https://marketplace.visualstudio.com/_apis/public/gallery"
+            jdata["extensionsGallery"]["itemUrl"] := "https://marketplace.visualstudio.com/items"
+            jdata["extensionsGallery"]["cacheUrl"] := "https://vscode.blob.core.windows.net/gallery/index"
+            return jdata
+        }        
+        return false
     }
 }
 
-Sleep(1)
 
 
 ;==================================================
