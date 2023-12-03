@@ -1,25 +1,18 @@
-```batch
-set VSCODE_GALLERY_SERVICE_URL='https://marketplace.visualstudio.com/_apis/public/gallery'
-set VSCODE_GALLERY_ITEM_URL='https://marketplace.visualstudio.com/items'
-set VSCODE_GALLERY_CACHE_URL='https://vscode.blob.core.windows.net/gallery/index'
-set VSCODE_GALLERY_CONTROL_URL=''
-```
 
-How to use a different extension gallery
-You can switch from the pre-set Open VSX Registry by configuring the endpoints using the following solutions. These examples use the URLs for Microsoft's VS Code Marketplace, see below for more information on that.
+I just spent about half an hour reading through Github issues and source code of VSCode & VSCodium to figure out how to get Pylance working. In short:
 
-With the following environment variables:
+The workaround described here suggests editing a product.json file, but find $HOME/.var/app/com.vscodium.codium -name 'product.json' returns nothing
+Found product.json should be editable #22 which links to customize the extensions gallery VSCodium/vscodium#674
+The linked PR contains a patch which looks for a user-provided product.json to merge into the compiled-in values - by default, no product.json is included in shipped builds
+Dropping the following file into $HOME/.var/app/com.vscodium.codium/config/VSCodium/product.json lets me run Pylance:
+{
+  "nameShort": "Visual Studio Code",
+  "nameLong": "Visual Studio Code",
+  "extensionsGallery": {
+    "serviceUrl": "https://marketplace.visualstudio.com/_apis/public/gallery",
+    "cacheUrl": "https://vscode.blob.core.windows.net/gallery/index",
+    "itemUrl": "https://marketplace.visualstudio.com/items"
+  }
+}
+As this is a rather specific workaround to a specific problem, perhaps just including a note somewhere is enough to spare others from having to go through the same journey.
 
-
-VSCODE_GALLERY_SERVICE_URL='https://marketplace.visualstudio.com/_apis/public/gallery'
-VSCODE_GALLERY_ITEM_URL='https://marketplace.visualstudio.com/items'
-VSCODE_GALLERY_CACHE_URL='https://vscode.blob.core.windows.net/gallery/index'
-VSCODE_GALLERY_CONTROL_URL=''
-Or by creating a custom product.json at the following location (replace VSCodium by VSCodium - Insiders if you use that):
-```
-Windows: %APPDATA%\VSCodium or %USERPROFILE%\AppData\Roaming\VSCodium
-macOS: ~/Library/Application Support/VSCodium
-Linux: $XDG_CONFIG_HOME/VSCodium or ~/.config/VSCodium
-with the content:
-```
-Note: set cacheUrl to empty string for every other extension gallery
