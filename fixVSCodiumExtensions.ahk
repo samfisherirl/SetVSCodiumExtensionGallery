@@ -7,11 +7,11 @@ Product_backup := appData "\Local\Programs\VSCodium\resources\app\product_backup
 
 Main()
 
-
 Main()
 {
     if FileExist(Product)
     {
+
         UpdateProductJson(Product)
         ExitApp()
     }
@@ -19,31 +19,30 @@ Main()
     {
         msg := Gui()
         msg.SetFont("s15")
-        txt := msg.Add("Text", , "VSCodium's product.json not found in appdata. Enter Path:")
-        msg.Add("Edit", "w300 h20 vPath")
-        msg.Add("Button", "w100", "Browse").OnEvent("Click", "Browse")
-        msg.Add("Button", "x+10 w100", "Confirm").OnEvent("Click", "Confirm")
+        txt := msg.Add("Text", , "VSCodium's product.json not found in appdata. Select/Enter Path:")
+        editField := msg.Add("Edit", "w300 h20 vPath")
+        msg.Add("Button", "w100", "Browse").OnEvent("Click", Browse)
+        msg.Add("Button", "x+10 w100", "Confirm").OnEvent("Click", Confirm)
         msg.Show()
         Browse(*)
         {
-            SelectedFile := FileSelect(3, , "Open a file", "Text Documents (*.txt; *.doc)")
+            SelectedFile := FileSelect(3, , "Open a file", "Json Documents (*.json)")
             if SelectedFile = ""
-                MsgBox "Nvm."
+                return
             else
             {
-                if !FileExist(SelectedFile)
+                if FileExist(SelectedFile)
                 {
-                    txt.Value := "=>File not found!"
+                    editField.Value := SelectedFile
                 }
             }
         }
         Confirm(*)
         {
-            if txt.Value != "=>File not found!"
+            if txt.Value != ""
             {
                 msg.Hide()
-                UpdateProductJson(txt.Value)
-                MsgBox("Done!`nRestart VSCodium to see changes.")
+                UpdateProductJson(editField.Value)
                 ExitApp()
             }
             
@@ -53,12 +52,18 @@ Main()
 
 class UpdateProductJson
 {
-    static Call(path, Product_backup?)
+    static Call(path)
     {
-        UpdateProductJson.Write(Product_backup, FileRead(Product))
+        if MsgBox("Would you like to update the file at: `n" path,, "YesNo") = "No"
+            return 0
+        UpdateProductJson.Write(path "_old", FileRead(path))
         jdata := UpdateProductJson.Read(path)
         if jdata != false
-            UpdateProductJson.Write(Product, Jsons.Dumps(jdata))
+        {
+            jdata := UpdateProductJson.UpdateJdata(&jdata)
+            UpdateProductJson.Write(path, Jsons.Dumps(jdata))
+            MsgBox("Done!`nA backup was made next to the original product json file.`nRestart VSCodium to see changes.")
+        }
     }
 
     static Write(Path, Str) => FileOpen(Path, "w").Write(Str)
@@ -72,6 +77,8 @@ class UpdateProductJson
     {
         if jdata["extensionsGallery"]["serviceUrl"] != "https://marketplace.visualstudio.com/_apis/public/gallery" || jdata["extensionsGallery"]["itemUrl"] != "https://marketplace.visualstudio.com/items" || jdata["extensionsGallery"]["cacheUrl"] != "https://vscode.blob.core.windows.net/gallery/index"
         {
+            jdata["nameLong"] := "Visual Studio Code"
+            jdata["nameShort"] := "Visual Studio Code"
             jdata["extensionsGallery"]["serviceUrl"] := "https://marketplace.visualstudio.com/_apis/public/gallery"
             jdata["extensionsGallery"]["itemUrl"] := "https://marketplace.visualstudio.com/items"
             jdata["extensionsGallery"]["cacheUrl"] := "https://vscode.blob.core.windows.net/gallery/index"
