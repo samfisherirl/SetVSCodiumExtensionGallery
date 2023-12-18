@@ -1,3 +1,9 @@
+Release out now to handle autofix
+
+<img width="468" alt="image" src="https://github.com/samfisherirl/SetVSCodiumExtensionGallery/assets/98753696/6dedb3e2-3e9e-42ef-b315-f382d6f48a96">
+
+
+
 I just spent about half an hour reading through Github issues and source code of VSCode & VSCodium to figure out how to get Pylance working. In short:
 
 -   The workaround described [here](https://github.com/VSCodium/vscodium/issues/892#issuecomment-986663776) suggests editing a `product.json` file, but `find $HOME/.var/app/com.vscodium.codium -name 'product.json'` returns nothing
